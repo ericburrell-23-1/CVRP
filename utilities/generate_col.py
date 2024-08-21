@@ -40,42 +40,74 @@ def pricing(model: Model, customers: list, start_depot: Customer, capacity: int)
     # CONNECT EACH CUSTOMER TO SOURCE/SINK
     for u in customers:
         # print(f"Demand: {u.demand}, Weight: {dist(start_depot, u)}")
+        edge_weight = dist(start_depot, u) - dual(model, u)
         g.add_edge("Source", str(u.id), res_cost=array([
-                   u.demand]), weight=dist(start_depot, u))
+                   float(u.demand)]), weight=edge_weight)
         # print(
         #     f"Demand: {0}, Weight: {dist(start_depot, u) - dual(model, u)} dist: {dist(start_depot, u)} dual: {dual(model, u)}")
-        g.add_edge(str(u.id), "Sink", res_cost=array([0]), weight=(
-            dist(start_depot, u) - dual(model, u)))
+        edge_weight = dist(start_depot, u)
+        g.add_edge(str(u.id), "Sink", res_cost=array(
+            [0.0]), weight=edge_weight)
 
     # CONNECT CUSTOMERS TO EACH OTHER
     for u in customers:
         for v in customers:
             if u != v:
-                edge_weight = dist(u, v) - dual(model, u)
+                edge_weight = dist(u, v) - dual(model, v)
                 # print(f"Edge weight: {edge_weight}")
                 # print(f"Demand: {v.demand}")
                 g.add_edge(str(u.id), str(v.id), res_cost=array([
-                           v.demand]), weight=edge_weight)
+                           float(v.demand)]), weight=edge_weight)
 
     # DEFINE RESOURCE CONSTRAINTS
-    max_res, min_res = [capacity], [0]
+    max_res, min_res = array([capacity + 1]), array([0.0])
 
     # RUN LABELING ALG TO GET PATH
-    bidirec = BiDirectional(g, max_res, min_res,
+    bidirec = BiDirectional(g, max_res=max_res, min_res=min_res,
                             direction="both", elementary=True)
-    print("BiDirec created")
 
     bidirec.run()
-    print(f"Done solving. Path = {bidirec.path}")
+    print(f"New path = {bidirec.path}")
 
     return bidirec.path, bidirec.total_cost
 
 
 def dist(a: Customer, b: Customer):
-    return math.hypot(a.x - b.x, a.y - b.y)
+    return math.hypot((a.x - b.x), (a.y - b.y))
 
 
 def dual(model: Model, customer: Customer):
-    dual_val = model.getConstrByName(f"customer_visted_once_{customer.id}").Pi
-    # NEED TO CALCULATE THE DUAL
-    return dual_val
+    return model.getConstrByName(f"cover_{customer.id}").Pi
+
+
+def column_gen(model, customers, start_depot, end_depot, cap):
+    cust_by_id = {}
+    for u in customers:
+        cust_by_id[u.id] = u
+    # BUILD PRICING GRAPH
+    pricing_graph = DiGraph(directed=True, n_res=1)
+
+    for u in customers:
+        pricing_graph.add_edge("Source", u, res_cost=array(
+            [u.demand]), weight=dist(start_depot, u))
+        pricing_graph.add_edge(u, "Sink", res_cost=array(
+            [0]), weight=dist(start_depot, u) - dual(model, u))
+
+        for v in customers:
+            if v.id != u.id:
+                pricing_graph.add_edge(u, v, res_cost=array(
+                    [v.demand]), weight=dist(u, v) - dual(model, v))
+
+    bidirec = BiDirectional(pricing_graph, [float(cap)], [
+                            0.0], elementary=True, direction="both")
+
+    bidirec.run()
+    print(f"Graph Solved: {bidirec.path}")
+
+    visited_cust = bidirec.path[1:-1]
+    visited_cust.insert(0, start_depot)
+    visited_cust.append(end_depot)
+
+    new_route = Route(visited_cust, customers, start_depot, end_depot)
+
+    return new_route, bidirec.total_cost

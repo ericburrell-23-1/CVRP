@@ -1,5 +1,6 @@
 import numpy as np
 from models.data_structures.customer import Customer
+from utilities.LA_neighbors import add_closest_neighbors
 
 
 def generate_problem(data_set: str, mydivisor):
@@ -67,6 +68,7 @@ def generate_problem(data_set: str, mydivisor):
         else:
             print(f"No demand found for customer {customer_id}")
 
+    add_closest_neighbors(customers, start_depot)
     capacity = np.ceil(capacity / mydivisor)
 
     return customers, start_depot, end_depot, capacity

@@ -7,3 +7,7 @@
 2. Coding Implementation and Ability
 
 3. Integration of Existing Work
+
+## Notes:
+
+- Recursive method and starting from Meta Graph yield same results
