@@ -3,7 +3,7 @@ from models.data_structures.customer import Customer
 from utilities.LA_neighbors import add_closest_neighbors
 
 
-def generate_problem(data_set: str, mydivisor):
+def generate_problem(data_set: str, MY_DIVISOR: int, NUM_LA_NEIGHBORS):
     print(f"Getting problem data for {data_set}")
 
     file_path = f"./data_sets/A/{data_set}"
@@ -64,11 +64,11 @@ def generate_problem(data_set: str, mydivisor):
                     print("Error: depot has nonzero demand")
             else:
                 customers.append(Customer(str(customer_id - 1),
-                                 x, y, np.ceil(demand / mydivisor)))
+                                 x, y, np.ceil(demand / MY_DIVISOR)))
         else:
             print(f"No demand found for customer {customer_id}")
 
-    add_closest_neighbors(customers, start_depot)
-    capacity = np.ceil(capacity / mydivisor)
+    add_closest_neighbors(customers, start_depot, NUM_LA_NEIGHBORS)
+    capacity = np.ceil(capacity / MY_DIVISOR)
 
     return customers, start_depot, end_depot, capacity

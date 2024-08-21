@@ -5,7 +5,7 @@ from gurobipy import Model, GRB, quicksum
 from models.data_structures.customer import Customer
 
 
-def add_closest_neighbors(customers: list, start_depot: Customer):
+def add_closest_neighbors(customers: list, start_depot: Customer, LAN_COUNT: int):
     for u in customers:
         customer_by_distance = []
         for v in customers + [start_depot]:
@@ -16,11 +16,10 @@ def add_closest_neighbors(customers: list, start_depot: Customer):
         u.closest_neighbors = [neighbor[0]
                                for neighbor in customer_by_distance]
 
-        add_LA_neighbors(u)
+        add_LA_neighbors(u, LAN_COUNT)
 
 
-def add_LA_neighbors(u: Customer):
-    LA_NEIGHBOR_COUNT = 10
+def add_LA_neighbors(u: Customer, LA_NEIGHBOR_COUNT: int):
 
     if len(u.closest_neighbors) > LA_NEIGHBOR_COUNT:
         u.LA_neighbors = u.closest_neighbors[:LA_NEIGHBOR_COUNT]
