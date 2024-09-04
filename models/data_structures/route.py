@@ -7,6 +7,7 @@ class Route:
         self.visits = visits
         self.id = self.build_route_id()
         self.cost = self.compute_cost()
+        self.demand = self.compute_demand()
         self.a_ul = self.compute_a_ul(customers)
         self.a_uvl = self.compute_a_uvl(customers, start_depot, end_depot)
 
@@ -61,3 +62,10 @@ class Route:
                         a[u.id, v.id] = 0
 
         return a
+
+    def compute_demand(self):
+        total_demand = 0
+        for u in self.visits:
+            total_demand += u.demand
+
+        return total_demand

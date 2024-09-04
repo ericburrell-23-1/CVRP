@@ -5,6 +5,10 @@ from models.data_structures.customer import Customer
 
 
 class LA_arc_index:
+    """
+    Used to index all LA_Arcs and shortest paths while building LA-Arcs from P+. Consists of the tuple (u, v, N_hat), and is used to quickly check equality of these objects.
+    """
+
     def __init__(self, u: Customer, v: Customer, N_hat: set):
         self.u = u
         self.v = v
@@ -33,7 +37,7 @@ class LA_arc_index:
         return obj_name
 
 
-class LA_arc:
+class LA_Arc:
     def __init__(self, u: Customer, v: Customer, N_hat: list, cost: float):
         self.u = u
         self.v = v
@@ -44,7 +48,7 @@ class LA_arc:
         self.id = self.compute_id()
 
     def __eq__(self, other):
-        if isinstance(other, LA_arc):
+        if isinstance(other, LA_Arc):
             return self.id == other.id
         else:
             return False
@@ -53,14 +57,14 @@ class LA_arc:
         return hash((self.u, self.v, tuple(self.N_hat)))
 
     def __repr__(self):
-        return f"LA_arc_index(u={self.u}, v={self.v}, N_hat={self.N_hat})"
+        return f"LA_Arc(u={self.u}, v={self.v}, N_hat={self.N_hat}, cost={self.cost})"
 
     def compute_demand(self):
         demand = 0
         for cust in [self.u] + self.N_hat:
             demand += cust.demand
 
-        return int(demand)
+        return int(round(demand))
 
     def compute_id(self):
         arc_id = f"{self.u.id}"
@@ -121,11 +125,11 @@ def find_P_plus(customers: list, end_depot: Customer):
         for w in p.N_hat:
             # for w in p.N_hat:
             N_hat = p.N_hat - {w}
-            if not (N_hat & set(w.LA_neighbors)) or p.v in w.LA_neighbors:
-                new_arc_index = LA_arc_index(w, p.v, N_hat)
-                if new_arc_index.name not in names_in_P_plus:
-                    P_plus[len(N_hat)].add(new_arc_index)
-                    names_in_P_plus.add(new_arc_index.name)
+            # if not (N_hat & set(w.LA_neighbors)) or p.v in w.LA_neighbors:
+            new_arc_index = LA_arc_index(w, p.v, N_hat)
+            if new_arc_index.name not in names_in_P_plus:
+                P_plus[len(N_hat)].add(new_arc_index)
+                names_in_P_plus.add(new_arc_index.name)
                 #     no_repeat += 1
                 # else:
                 #     repeat += 1
@@ -174,11 +178,14 @@ def find_LA_arcs(customers: list, end_depot: Customer, capacity: int):
 
     # print("Getting base cases |N_hat| = 0")
     for p in P_plus[0]:
-        new_arc = LA_arc(p.u, p.v, [], dist(p.u, p.v))
+        new_arc = LA_Arc(p.u, p.v, [], dist(p.u, p.v))
         optimal_ordering[p] = new_arc
         if p.v not in p.u.LA_neighbors:
             y = (new_arc.u.id, new_arc.v.id, new_arc.demand)
-            omega_y[y] = [new_arc]
+            if y in omega_y:
+                omega_y[y].append(new_arc)
+            else:
+                omega_y[y] = [new_arc]
 
     finding_lowest_cost_arc_time = 0
     start_cost = 0
@@ -189,9 +196,17 @@ def find_LA_arcs(customers: list, end_depot: Customer, capacity: int):
             min_cost = 9999999
             intermediate_cust_path = []
             start_cost = time.time()
+            # input(f"Looking at P+ element: {p.name}")
             for w in p.N_hat:
-                prev_p = LA_arc_index(p.u, p.v, (p.N_hat - {w}))
-                cost = dist(p.u, w) + optimal_ordering[prev_p].cost
+                prev_p = LA_arc_index(w, p.v, (p.N_hat - {w}))
+                # if prev_p not in optimal_ordering:
+                #     input(f"Arc index for {prev_p.name} not found")
+                #     continue
+                predecessor = optimal_ordering[prev_p]
+                cost = dist(p.u, w) + predecessor.cost
+                # input(
+                #     f"Exploring w = {w.id}, prev_p = {prev_p.name}, predecessor = {[c.id for c in predecessor.visits]}, predecessor cost = {predecessor.cost}, new cost = {cost}")
+
                 if cost < min_cost:
                     min_cost = cost
                     intermediate_cust_path = [w] + \
@@ -199,9 +214,9 @@ def find_LA_arcs(customers: list, end_depot: Customer, capacity: int):
             end_cost = time.time()
             finding_lowest_cost_arc_time += (end_cost - start_cost)
 
-            new_arc = LA_arc(p.u, p.v, intermediate_cust_path, min_cost)
+            new_arc = LA_Arc(p.u, p.v, intermediate_cust_path, min_cost)
             optimal_ordering[p] = new_arc
-            if p.v not in p.u.LA_neighbors and new_arc.demand <= capacity - p.v.demand:
+            if p.v not in p.u.LA_neighbors and new_arc.demand <= int(round(capacity - p.v.demand)):
                 y = (new_arc.u.id, new_arc.v.id, new_arc.demand)
                 if y in omega_y:
                     omega_y[y].append(new_arc)

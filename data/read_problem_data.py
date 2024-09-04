@@ -3,7 +3,11 @@ from models.data_structures.customer import Customer
 from utilities.LA_neighbors import add_closest_neighbors
 
 
-def generate_problem(data_set: str, MY_DIVISOR: int, NUM_LA_NEIGHBORS):
+def generate_problem(data_set: str, MY_DIVISOR: int, NUM_LA_NEIGHBORS: int, CUSTOMER_SIZE_LIMIT=9999):
+    """
+    Loads problem data for specified `data_set` and returns a list of customers, start and end depots (as customer objects), and vehicle capacity for the problem.
+    Has optional `CUSTOMER_SIZE_LIMIT` argument to truncate the set of customers.
+    """
     print(f"Getting problem data for {data_set}")
 
     file_path = f"./data_sets/A/{data_set}"
@@ -67,6 +71,12 @@ def generate_problem(data_set: str, MY_DIVISOR: int, NUM_LA_NEIGHBORS):
                                  x, y, np.ceil(demand / MY_DIVISOR)))
         else:
             print(f"No demand found for customer {customer_id}")
+
+    if len(customers) > CUSTOMER_SIZE_LIMIT:
+        if CUSTOMER_SIZE_LIMIT < 1:
+            print("WARNING: Enter positive customer size limit")
+        else:
+            customers = customers[:CUSTOMER_SIZE_LIMIT]
 
     add_closest_neighbors(customers, start_depot, NUM_LA_NEIGHBORS)
     capacity = np.ceil(capacity / MY_DIVISOR)

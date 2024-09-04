@@ -31,7 +31,7 @@ class LA_arc:
         for cust in [self.u] + self.N_hat:
             demand += cust.demand
 
-        return int(demand)
+        return int(round(demand))
 
     def compute_id(self):
         arc_id = f"{self.u.id}"

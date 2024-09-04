@@ -106,7 +106,7 @@ def create_RMP_GM_LA_model(omega_R_plus: list, omega_y_l: list, customers: list,
                 arc_terms.append(x_p[l][arc])
 
             for (i, j) in sorted_edges[l]:
-                if i.u.id == u_id and j.u.id == v_id and (j.cap_remain == i.cap_remain - d):
+                if i.u.id == u_id and j.u.id == v_id and (int(j.cap_remain) == int(round(i.cap_remain - d))):
                     ij_terms.append(x_ij[l][i.name, j.name])
 
             model.addConstr(quicksum(arc_terms) == quicksum(

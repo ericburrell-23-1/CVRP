@@ -95,22 +95,23 @@ def create_LA_arc_graph(omega_y: dict, beta: list, capacity: int):
         '''
         beta_index = beta.index(node.u)
         for v in beta[beta_index + 1:]:
-            if node.cap_remain - v.demand >= node.u.demand:
-                for d in range(int(node.u.demand), int(node.cap_remain - v.demand + 1)):
+            if round(node.cap_remain - v.demand) >= node.u.demand:
+                for d in range(int(node.u.demand), int(round(node.cap_remain - v.demand + 1))):
                     y = (node.u.id, v.id, int(d))
                     if y in omega_y:
-                        new_node = Node(v, node.cap_remain - d)
+                        new_node = Node(v, int(round(node.cap_remain - d)))
                         if (node, new_node) not in edges:
                             edges.add((node, new_node))
+                            # print(f"Edge added ({node.name}, {new_node.name})")
                             if (v.id != "end") and (new_node not in visited):
-                                # input(f"Exploring new node {new_node.name}")
+                                # print(f"Exploring new node {new_node.name}")
                                 visited.add(new_node)
                                 draw_edges_from(new_node)
                             elif v.id == "end" and (new_node not in visited):
                                 visited.add(new_node)
 
     for v in beta[1:-1]:
-        new_node = Node(v, int(start_node.cap_remain - v.demand))
+        new_node = Node(v, int(round(start_node.cap_remain)))
         edges.add((start_node, new_node))
         # print(f"Edge added ({start_node.name}, {new_node.name})")
         visited.add(new_node)
@@ -130,7 +131,7 @@ def create_meta_graph(customers: list, start_depot: Customer, end_depot: Custome
     sink = Node(end_depot, 0)
     nodes.append(source)
     for u in customers:
-        for d in range(int(u.demand), int(capacity + 1)):
+        for d in range(int(u.demand), int(round(capacity + 1))):
             nodes.append(Node(u, d))
     nodes.append(sink)
 
@@ -138,7 +139,7 @@ def create_meta_graph(customers: list, start_depot: Customer, end_depot: Custome
         edges.add((i, sink))
         edges.add((source, i))
         for j in nodes[1:-1]:
-            if j.cap_remain == i.cap_remain - i.u.demand:
+            if j.cap_remain == round(i.cap_remain - i.u.demand):
                 edges.add((i, j))
 
     return edges, nodes
