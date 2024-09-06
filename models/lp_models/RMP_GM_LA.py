@@ -52,23 +52,24 @@ def create_RMP_GM_LA_model(omega_R_plus: list, omega_y_l: list, customers: list,
     arcs_obj_terms = []
 
     for l in all_l:
-        start_node = nodes[l][0]
-        for u in customers:
-            for j in nodes[l]:
-                if j.u.id == u.id and int(j.cap_remain) == int(round(start_node.cap_remain)):
-                    depart_depot_obj_terms.append(
-                        x_ij[l][start_node.name, j.name] * cost[start_node.u.id, u.id])
-                    if u.id in depart_depot_vars:
-                        depart_depot_vars[u.id].append(
-                            x_ij[l][start_node.name, j.name])
-                    else:
-                        depart_depot_vars[u.id] = [
-                            x_ij[l][start_node.name, j.name]]
+        if len(nodes[l]):
+            start_node = nodes[l][0]
+            for u in customers:
+                for j in nodes[l]:
+                    if j.u.id == u.id and int(j.cap_remain) == int(round(start_node.cap_remain)):
+                        depart_depot_obj_terms.append(
+                            x_ij[l][start_node.name, j.name] * cost[start_node.u.id, u.id])
+                        if u.id in depart_depot_vars:
+                            depart_depot_vars[u.id].append(
+                                x_ij[l][start_node.name, j.name])
+                        else:
+                            depart_depot_vars[u.id] = [
+                                x_ij[l][start_node.name, j.name]]
 
-        omega_y = omega_y_l[l]
-        for y in omega_y:
-            for arc in omega_y[y]:
-                arcs_obj_terms.append(x_p[l][arc.id] * arc.cost)
+            omega_y = omega_y_l[l]
+            for y in omega_y:
+                for arc in omega_y[y]:
+                    arcs_obj_terms.append(x_p[l][arc.id] * arc.cost)
 
     all_obj_terms = depart_depot_obj_terms + arcs_obj_terms
     model.setObjective(xp.Sum(all_obj_terms), xp.minimize)

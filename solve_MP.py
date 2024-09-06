@@ -23,7 +23,7 @@ def solve_MP_with_CG():
     data_set = "A-n32-k5.vrp"
     MYDIVISOR = 20
     NUM_LA_NEIGHBORS = 0
-    CUSTOMER_SIZE_LIMIT = 10
+    CUSTOMER_SIZE_LIMIT = 15
     customers, start_depot, end_depot, capacity = generate_problem(
         data_set, MYDIVISOR, NUM_LA_NEIGHBORS, CUSTOMER_SIZE_LIMIT)
 
@@ -167,8 +167,8 @@ def solve_MP_CG_GM():
 def solve_MP_GM_LA():
     data_set = "A-n32-k5.vrp"
     MYDIVISOR = 20
-    NUM_LA_NEIGHBORS = 7
-    CUSTOMER_SIZE_LIMIT = 10
+    NUM_LA_NEIGHBORS = 5
+    CUSTOMER_SIZE_LIMIT = 12
     customers, start_depot, end_depot, capacity = generate_problem(
         data_set, MYDIVISOR, NUM_LA_NEIGHBORS, CUSTOMER_SIZE_LIMIT)
 
@@ -234,7 +234,7 @@ def solve_MP_GM_LA():
             #     print([c.id for c in route.visits])
             model, cover_constrs, x_ij, x_p = create_RMP_GM_LA_model(
                 omega_R_plus, omega_y_l, customers, start_depot, end_depot)
-            input(f"Negative reduced cost: rc = {round(rc, 4)}\n")
+            print(f"Negative reduced cost: rc = {round(rc, 4)}\n")
 
             # user_iter = True
             # while user_iter:
@@ -261,89 +261,89 @@ def solve_MP_GM_LA():
     model.optimize()
 
 
-def CG_then_LAGM():
-    data_set = "A-n32-k5.vrp"
-    MYDIVISOR = 20
-    NUM_LA_NEIGHBORS = 5
-    CUSTOMER_SIZE_LIMIT = 12
-    customers, start_depot, end_depot, capacity = generate_problem(
-        data_set, MYDIVISOR, NUM_LA_NEIGHBORS, CUSTOMER_SIZE_LIMIT)
+# def CG_then_LAGM():
+#     data_set = "A-n32-k5.vrp"
+#     MYDIVISOR = 20
+#     NUM_LA_NEIGHBORS = 5
+#     CUSTOMER_SIZE_LIMIT = 12
+#     customers, start_depot, end_depot, capacity = generate_problem(
+#         data_set, MYDIVISOR, NUM_LA_NEIGHBORS, CUSTOMER_SIZE_LIMIT)
 
-    cust_by_id = {}
-    for u in customers + [start_depot, end_depot]:
-        cust_by_id[u.id] = u
+#     cust_by_id = {}
+#     for u in customers + [start_depot, end_depot]:
+#         cust_by_id[u.id] = u
 
-    omega_r = initialize_omega_r(start_depot, customers, end_depot)
+#     omega_r = initialize_omega_r(start_depot, customers, end_depot)
 
-    RMP_model, cover_constrs = create_RMP_model(omega_r, customers)
+#     RMP_model, cover_constrs = create_RMP_model(omega_r, customers)
 
-    # GENERATE NEW COLUMN, UPDATE MODEL, SOLVE AND REPEAT
-    continue_iter = True
-    cg_count = 0
-    while continue_iter:
-        RMP_model.solve()
+#     # GENERATE NEW COLUMN, UPDATE MODEL, SOLVE AND REPEAT
+#     continue_iter = True
+#     cg_count = 0
+#     while continue_iter:
+#         RMP_model.solve()
 
-        new_col, rc = generate_col(
-            RMP_model, cover_constrs, customers, start_depot, end_depot, capacity)
+#         new_col, rc = generate_col(
+#             RMP_model, cover_constrs, customers, start_depot, end_depot, capacity)
 
-        cg_count += 1
-        if rc >= -epsilon:
-            print(f"Done interating. RC = {rc}")
-            continue_iter = False
-        else:
-            print(f"Adding Column {new_col.id}")
-            add_col_to_model(RMP_model, cover_constrs, new_col, customers)
-            omega_r.append(new_col)
+#         cg_count += 1
+#         if rc >= -epsilon:
+#             print(f"Done interating. RC = {rc}")
+#             continue_iter = False
+#         else:
+#             print(f"Adding Column {new_col.id}")
+#             add_col_to_model(RMP_model, cover_constrs, new_col, customers)
+#             omega_r.append(new_col)
 
-    RMP_model.controls.outputlog = 1
-    RMP_model.solve()
+#     RMP_model.controls.outputlog = 1
+#     RMP_model.solve()
 
-    omega_y = find_LA_arcs(customers, end_depot, capacity)
-    omega_y_l = []
-    omega_R_plus = []
+#     omega_y = find_LA_arcs(customers, end_depot, capacity)
+#     omega_y_l = []
+#     omega_R_plus = []
 
-    for route in omega_r:
-        beta = compute_beta(route, customers)
-        omega_y_l.append(compute_omega_y_l(beta, omega_y))
-        (edges, nodes) = create_LA_arc_graph(omega_y_l[0], beta, capacity)
-        # print(f"Graph has {len(nodes)} nodes and {len(edges)} edges")
-        omega_R_plus.append((edges, nodes))
+#     for route in omega_r:
+#         beta = compute_beta(route, customers)
+#         omega_y_l.append(compute_omega_y_l(beta, omega_y))
+#         (edges, nodes) = create_LA_arc_graph(omega_y_l[0], beta, capacity)
+#         # print(f"Graph has {len(nodes)} nodes and {len(edges)} edges")
+#         omega_R_plus.append((edges, nodes))
 
-    model, cover_constrs, x_ij, x_p = create_RMP_GM_LA_model(
-        omega_R_plus, omega_y_l, customers, start_depot, end_depot)
+#     model, cover_constrs, x_ij, x_p = create_RMP_GM_LA_model(
+#         omega_R_plus, omega_y_l, customers, start_depot, end_depot)
 
-    continue_iter = True
-    while continue_iter:
-        model.optimize()
-        print(f"Model has an LP objective val = {model.getObjVal()}")
-        show_graph_edges_in_solution(x_ij, model)
+#     continue_iter = True
+#     while continue_iter:
+#         model.optimize()
+#         print(f"Model has an LP objective val = {model.getObjVal()}")
+#         show_graph_edges_in_solution(x_ij, model)
 
-        new_route, rc = generate_col(
-            model, cover_constrs, customers, start_depot, end_depot, capacity)
+#         new_route, rc = generate_col(
+#             model, cover_constrs, customers, start_depot, end_depot, capacity)
 
-        if rc >= -epsilon:
-            print(
-                f"Done solving. Non-negative reduced cost: rc = {round(rc, 4)}\n")
+#         if rc >= -epsilon:
+#             print(
+#                 f"Done solving. Non-negative reduced cost: rc = {round(rc, 4)}\n")
 
-            continue_iter = False
-        else:
-            omega_r.append(new_route)
-            beta = compute_beta(new_route, customers)
-            omega_y_l.append(compute_omega_y_l(beta, omega_y))
-            omega_R_plus.append(create_LA_arc_graph(
-                omega_y_l[-1], beta, capacity))
+#             continue_iter = False
+#         else:
+#             omega_r.append(new_route)
+#             beta = compute_beta(new_route, customers)
+#             omega_y_l.append(compute_omega_y_l(beta, omega_y))
+#             omega_R_plus.append(create_LA_arc_graph(
+#                 omega_y_l[-1], beta, capacity))
 
-            model, cover_constrs, x_ij, x_p = create_RMP_GM_LA_model(
-                omega_R_plus, omega_y_l, customers, start_depot, end_depot)
-            input(f"Negative reduced cost: rc = {round(rc, 4)}\n")
+#             model, cover_constrs, x_ij, x_p = create_RMP_GM_LA_model(
+#                 omega_R_plus, omega_y_l, customers, start_depot, end_depot)
+#             input(f"Negative reduced cost: rc = {round(rc, 4)}\n")
 
-    model.controls.outputlog = 1
-    model.optimize()
+#     model.controls.outputlog = 1
+#     model.optimize()
 
 
-# solve_MP_with_CG()
+solve_MP_with_CG()
 # solve_MP_CG_GM()
-solve_MP_GM_LA()
+# solve_MP_GM_LA()
 # CG_then_LAGM()
 
 

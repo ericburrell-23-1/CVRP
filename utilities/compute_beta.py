@@ -33,7 +33,7 @@ def compute_beta(route: Route, customers: list):
                 beta.insert(beta.index(u) + 1, v)
                 break
 
-    print(f"Beta = {[u.id for u in beta]}")
+    # print(f"Beta = {[u.id for u in beta]}")
     return beta
 
 
@@ -83,7 +83,7 @@ def create_LA_arc_graph(omega_y: dict, beta: list, capacity: int):
     '''
     Creates GraphMaster graph, consistent with ordering beta and beta-compliant LA arcs omega_y. Contains edges from starting node (start_depot, capacity) to nodes at each customer (u, capacity - d_u), and then to all other nodes that can be accessed by following an LA arc in omega_y. Returns (edges, nodes).
     '''
-    print("Creating LA arc graph")
+    # print("Creating LA arc graph")
     edges = set()
     visited = set()
     start_node = Node(beta[0], int(capacity))
@@ -118,7 +118,7 @@ def create_LA_arc_graph(omega_y: dict, beta: list, capacity: int):
         # print(f"Exploring new node {new_node.name}")
         draw_edges_from(new_node)
 
-    print("Graph complete")
+    # print("Graph complete")
 
     return (edges, sorted(visited, key=node_sort))
 
