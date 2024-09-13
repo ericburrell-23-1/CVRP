@@ -13,8 +13,8 @@ def create_RMP_GM_LA_model(omega_R_plus: list, omega_y_l: list, customers: list,
     model = xp.problem("GM_LA_model")
     model.controls.outputlog = 0
 
-    print(
-        f"Creating RMP_LA model with {len(omega_R_plus)} graphs and {len(omega_y_l)} sets of LA arcs.")
+    # print(
+    #     f"Creating RMP_LA model with {len(omega_R_plus)} graphs and {len(omega_y_l)} sets of LA arcs.")
 
     x_ij = {}
     x_p = {}

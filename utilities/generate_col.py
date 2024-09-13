@@ -36,7 +36,7 @@ def generate_col(model, constraints: dict, customers: list, start_depot: Custome
 
 def pricing(duals, customers: list, start_depot: Customer, capacity: int):
     # CREATE GRAPH
-    g = DiGraph(directed=True, n_res=1)
+    g = DiGraph(directed=True, n_res=1, elementary=True)
 
     # CONNECT EACH CUSTOMER TO SOURCE/SINK
     for u in customers:
