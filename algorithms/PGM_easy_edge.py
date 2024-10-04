@@ -72,7 +72,6 @@ def consistent_N2_graphs(omega_R_plus: list, N2_pairs: list, incumbent_graphs: l
     return consistent_graphs, new_edges
 
 
-@lru_cache(maxsize=12800)
 def arc_reduced_cost(arc: LA_Arc, cover_constraints: dict, RCI_constrs: dict, model: xp.problem):
     """Helper function to compute reduced cost of an LA-Arc"""
     rc = arc.cost
