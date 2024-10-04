@@ -31,7 +31,7 @@ def add_col_to_model(model: xp.problem, constraints: dict, route: Route, custome
 
     model.addcols(
         objcoef=[route.cost],
-        start=[0, 0],
+        start=[0, len(row_coeffs)],
         rowind=row_indices,
         rowcoef=row_coeffs,
         lb=[0],

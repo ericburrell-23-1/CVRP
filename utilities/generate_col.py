@@ -6,11 +6,11 @@ from models.data_structures.customer import Customer
 from models.data_structures.route import Route
 
 
-def generate_col(model, constraints: dict, customers: list, start_depot: Customer, end_depot: Customer, capacity: int):
+def generate_col(model, constraints: dict, customers: list, start_depot: Customer, end_depot: Customer, capacity: int, RCI_constrs: dict = None):
     duals = dual_dict(model, constraints, customers)
 
-    visits_by_id, reduced_cost = pricing(
-        duals, customers, start_depot, capacity)
+    visits_by_id, reduced_cost = pricing(model,
+        duals, customers, start_depot, capacity, RCI_constrs)
 
     # print("Path found. Building Route")
 
@@ -34,7 +34,7 @@ def generate_col(model, constraints: dict, customers: list, start_depot: Custome
     return new_route, reduced_cost
 
 
-def pricing(duals, customers: list, start_depot: Customer, capacity: int):
+def pricing(model, duals, customers: list, start_depot: Customer, capacity: int, RCI_constrs: dict):
     # CREATE GRAPH
     g = DiGraph(directed=True, n_res=1, elementary=True)
 
@@ -46,7 +46,7 @@ def pricing(duals, customers: list, start_depot: Customer, capacity: int):
                    float(u.demand)]), weight=edge_weight)
         # print(
         #     f"Demand: {0}, Weight: {dist(start_depot, u) - dual(model, u)} dist: {dist(start_depot, u)} dual: {dual(model, u)}")
-        edge_weight = dist(start_depot, u)
+        edge_weight = dist(start_depot, u) - RCI_term(model, u, start_depot, RCI_constrs)
         g.add_edge(str(u.id), "Sink", res_cost=array(
             [0.0]), weight=edge_weight)
 
@@ -54,7 +54,7 @@ def pricing(duals, customers: list, start_depot: Customer, capacity: int):
     for u in customers:
         for v in customers:
             if u != v:
-                edge_weight = dist(u, v) - duals[v.id]
+                edge_weight = dist(u, v) - duals[v.id] - RCI_term(model, u, v, RCI_constrs)
                 # print(f"Edge weight: {edge_weight}")
                 # print(f"Demand: {v.demand}")
                 g.add_edge(str(u.id), str(v.id), res_cost=array([
@@ -83,3 +83,16 @@ def dual_dict(model, constraints: dict, customers: list):
         duals[u.id] = model.getDual(constraints[u.id])
 
     return duals
+
+def RCI_term(model, a: Customer, b: Customer, RCI_constrs: dict):
+    if RCI_constrs == None:
+        return 0
+    applicable_constraints = RCI_constrs[a.id] - RCI_constrs[b.id]
+    RCI_dual_val = 0
+    for constr in applicable_constraints:
+        RCI_dual_val += model.getDual(constr[0])
+    # for constr_name in RCI_constrs:
+    #     if a in RCI_constrs[constr_name] and b not in RCI_constrs[constr_name]:
+    #         RCI_dual_val += model.getDual(constr_name)[0]
+
+    return RCI_dual_val

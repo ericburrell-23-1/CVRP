@@ -96,7 +96,9 @@ def create_RMP_GM_LA_model(omega_R_plus: list, omega_y_l: list, customers: list,
         cover_constrs[u.id] = constr
 
     # FLOW CONSTRAINTS
+    flow_constrs = {}
     for l in all_l:
+        flow_constrs[l] = {}
         for node in nodes[l]:
             if node.u not in {start_depot, end_depot}:
                 flow_in = []
@@ -108,12 +110,16 @@ def create_RMP_GM_LA_model(omega_R_plus: list, omega_y_l: list, customers: list,
                     if j == node:
                         flow_in.append(x_ij[l][i.name, j.name])
 
-                constr = xp.Sum(flow_in) == xp.Sum(flow_out)
+                constr = xp.Sum(flow_in) - xp.Sum(flow_out) == 0
                 constr.name = f"flow_l{l}_{node.name}"
                 model.addConstraint(constr)
 
+                flow_constrs[l][node.name] = constr
+
     # GRAPH/ARC CONSISTENCY CONSTRAINTS
+    consistency_constrs = {}
     for l in all_l:
+        consistency_constrs[l] = {}
         omega_y = omega_y_l[l]
         for (u_id, v_id, d) in omega_y:
             arc_terms = []
@@ -126,11 +132,13 @@ def create_RMP_GM_LA_model(omega_R_plus: list, omega_y_l: list, customers: list,
                 if i.u.id == u_id and j.u.id == v_id and int(j.cap_remain) == int(round(i.cap_remain - d)):
                     graph_terms.append(x_ij[l][i.name, j.name])
 
-            constr = xp.Sum(arc_terms) == xp.Sum(graph_terms)
+            constr = xp.Sum(arc_terms) - xp.Sum(graph_terms) == 0
             constr.name = f"consistent_l{l}_y{u_id}_{v_id}_{d}"
             model.addConstraint(constr)
 
-    return model, cover_constrs, x_ij, x_p
+            consistency_constrs[l][(u_id, v_id, d)] = constr
+
+    return model, cover_constrs, flow_constrs, consistency_constrs, x_ij, x_p
 
 
 def distance_dict(customers: list, start_depot: Customer, end_depot: Customer):
@@ -140,3 +148,10 @@ def distance_dict(customers: list, start_depot: Customer, end_depot: Customer):
             cost[u.id, v.id] = math.hypot(u.x - v.x, u.y - v.y)
 
     return cost
+
+
+def convert_to_ILP(model: xp.problem):
+    variables = model.getVariable()
+
+    for var in variables:
+        var.vartype = xp.binary

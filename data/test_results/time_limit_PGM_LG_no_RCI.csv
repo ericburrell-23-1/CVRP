@@ -1,0 +1,16 @@
+Algorithm,Data_set,Num_customers,Capacity_divisor,Time_limit,LP_solve_time,ILP_solve_time,PGM_time,Pricing_time,Preprocessing_time,LP_obj_val,ILP_obj_val,Total_time,CG_iterations,PGM_iterations
+Time-Limited Last-Graph PGM no RCI,cust-N30.vrp,30,1,30,0.84,0.34,3.08,21.08,0.11,958.22,980.9,27.03,6,86
+Time-Limited Last-Graph PGM no RCI,cust-N30.vrp,30,1,30,0.62,2.04,2.59,22.69,0.12,959.6,979.42,29.79,7,78
+Time-Limited Last-Graph PGM no RCI,cust-N30.vrp,30,1,30,0.69,0.18,2.92,23.58,0.09,956.41,961.48,29.23,8,90
+Time-Limited Last-Graph PGM no RCI,cust-N50.vrp,50,1,30,0.57,4.14,4.47,0,0.27,1720.94,1773.97,10.25,0,65
+Time-Limited Last-Graph PGM no RCI,cust-N50.vrp,50,1,30,0.46,3.33,3.7,0,0.29,1720.94,1777.81,8.58,0,63
+Time-Limited Last-Graph PGM no RCI,cust-N50.vrp,50,1,30,0.48,3.19,3.81,0,0.28,1720.94,1776.27,8.48,0,67
+Time-Limited Last-Graph PGM no RCI,cust-N50.vrp,50,2,30,0.46,1.95,4.32,24.0,0.25,2053.93,2096.53,32.18,3,110
+Time-Limited Last-Graph PGM no RCI,cust-N50.vrp,50,2,30,0.44,4.77,5.41,21.57,0.24,2057.15,2127.95,33.67,3,120
+Time-Limited Last-Graph PGM no RCI,cust-N50.vrp,50,2,30,0.54,4.88,5.72,22.3,0.26,2046.79,2113.4,34.97,3,128
+Time-Limited Last-Graph PGM no RCI,cust-N80.vrp,80,2,30,0.65,4.65,11.45,0,0.54,3167.53,3212.44,17.74,0,127
+Time-Limited Last-Graph PGM no RCI,cust-N80.vrp,80,2,30,0.34,3.58,10.91,0,0.59,3167.53,3209.52,15.81,0,125
+Time-Limited Last-Graph PGM no RCI,cust-N80.vrp,80,2,30,0.59,2.17,11.83,0,0.6,3167.53,3197.32,15.57,0,135
+Time-Limited Last-Graph PGM no RCI,cust-N100.vrp,100,2,30,0.82,10.79,24.55,0,1.02,3626.84,3684.2,37.27,0,157
+Time-Limited Last-Graph PGM no RCI,cust-N100.vrp,100,2,30,0.65,10.96,22.02,0,1.0,3626.84,3676.88,34.84,0,143
+Time-Limited Last-Graph PGM no RCI,cust-N100.vrp,100,2,30,0.78,5.3,22.13,0,0.95,3626.84,3669.85,29.35,0,149

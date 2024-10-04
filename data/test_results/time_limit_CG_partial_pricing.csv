@@ -1,0 +1,17 @@
+Algorithm,Data_set,Num_customers,Capacity_divisor,Time_limit,LP_solve_time,ILP_solve_time,Pricing_time,Model_update_time,Preprocessing_time,LP_obj_val,ILP_obj_val,Total_time,CG_iterations
+Time-limited CG with partial pricing,cust-N30.vrp,30,1,None,0.01,0.31,9.21,0.78,0.0,990.2,1096.29,10.32,119
+Time-limited CG with partial pricing,cust-N30.vrp,30,1,None,0.02,0.29,9.26,0.73,0.02,990.2,1096.29,10.32,119
+Time-limited CG with partial pricing,cust-N30.vrp,30,1,None,0.02,0.3,9.35,0.74,0.02,990.2,1096.29,10.4,119
+Time-limited CG with partial pricing,cust-N50.vrp,50,1,None,0.0,0.02,295.33,0.69,0.05,6533.42,6533.42,30.02,0
+Time-limited CG with partial pricing,cust-N50.vrp,50,2,None,0.01,0.51,29.22,0.79,0.06,2099.13,2204.21,30.51,184
+Time-limited CG with partial pricing,cust-N50.vrp,50,2,None,0.06,0.54,29.2,0.64,0.05,2099.13,2204.21,30.44,184
+Time-limited CG with partial pricing,cust-N50.vrp,50,2,None,0.05,0.53,29.14,0.67,0.06,2099.13,2204.21,30.38,184
+Time-limited CG with partial pricing,cust-N80.vrp,80,2,None,0.0,0.01,29.44,0.7,0.14,10059.29,4541.08,30.01,13
+Time-limited CG with partial pricing,cust-N80.vrp,80,2,None,0.0,0.01,29.41,0.67,0.14,10059.29,4541.08,30.02,13
+Time-limited CG with partial pricing,cust-N80.vrp,80,2,None,0.0,0.01,29.45,0.67,0.15,10059.29,4354.3,30.01,14
+Time-limited CG with partial pricing,cust-N100.vrp,100,2,None,0.0,0.01,32.62,0.7,0.26,11266.36,11266.36,30.01,0
+Time-limited CG with partial pricing,cust-N100.vrp,100,2,None,0.0,0.01,32.83,0.65,0.25,11266.36,11266.36,30.01,0
+Time-limited CG with partial pricing,cust-N80.vrp,80,2,30,0.0,0.01,29.66,0.5,0.15,10059.29,4541.08,30.01,13
+Time-limited CG with partial pricing,cust-N80.vrp,80,2,30,0.04,0.22,17.27,0.43,0.15,3174.96,3217.08,17.96,282
+Time-limited CG with partial pricing,cust-N100.vrp,100,2,30,0.04,0.63,29.55,0.43,0.25,3642.4,3724.82,30.63,333
+Time-limited CG with partial pricing,cust-N100.vrp,100,1,30,0.03,1.04,29.55,0.43,0.26,2994.43,3247.13,31.04,284

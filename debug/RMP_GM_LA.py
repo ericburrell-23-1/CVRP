@@ -1,4 +1,5 @@
 import math
+import xpress as xp
 
 
 def show_LA_arcs_in_solution(x_p: dict, model):
@@ -16,7 +17,7 @@ def show_graph_edges_in_solution(x_ij: dict, model):
         for (i_name, j_name) in x_ij[l]:
             var = x_ij[l][i_name, j_name]
             solution = model.getSolution(var)
-            if solution > 0:
+            if solution > 0.0001:
                 print(
                     f"Graph variable {var.name} has value {round(solution, 2)}")
 
@@ -114,3 +115,36 @@ def check_reduced_cost_of_gen_col(new_route, model, cover_constrs):
         dual_sum += model.getDual(cover_constrs[u.id])
 
     print(f"Route {[c.id for c in new_route.visits]} reduced cost: route.cost = {new_route.cost}, route_cost = {route_cost}, dual_sum = {dual_sum}, rc = {route_cost - dual_sum}")
+
+
+
+def show_primal_and_duals(model: xp.problem, x_ij: dict, cover_constraints: dict, RCI_constraints: dict):
+    print("Primal Solution:")
+    for l in x_ij:
+        for (i, j) in x_ij[l]:
+            sol = model.getSolution(x_ij[l][(i, j)])
+            if sol > 0.00001:
+                print(f"{x_ij[l][(i, j)].name} = {sol}")
+
+    print("Dual Solution:")
+    for c_u in cover_constraints:
+        sol = model.getDual(cover_constraints[c_u])
+        print(f"Cover_{c_u} = {sol}")
+
+    RCI_printed = set()
+    for u in RCI_constraints:
+        for c in RCI_constraints[u]:
+            if c[0] not in RCI_printed:
+                RCI_printed.add(c[0])
+                sol = model.getDual(c[0])
+                print(f"{c} = {sol}, rhs = {c[1]}")
+
+
+
+def show_primal(model: xp.problem, x_ij: dict):
+    print("Primal Solution:")
+    for l in x_ij:
+        for (i, j) in x_ij[l]:
+            sol = model.getSolution(x_ij[l][(i, j)])
+            if sol > 0.00001:
+                print(f"{x_ij[l][(i, j)].name} = {sol}")

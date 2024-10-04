@@ -1,0 +1,19 @@
+Algorithm,Data_set,Num_customers,Capacity_divisor,Time_limit,LP_solve_time,ILP_solve_time,PGM_time,Pricing_time,Preprocessing_time,LP_obj_val,ILP_obj_val,Total_time,CG_iterations,PGM_iterations,RCI_constrs_added
+Time-Limited Last-Graph PGM with RCI,cust-N30.vrp,30,1,30,0.8,0.1,4.8,20.19,2.08,971.65,971.65,29.85,3,76,41
+Time-Limited Last-Graph PGM with RCI,cust-N30.vrp,30,1,30,1.02,0.35,4.51,20.23,1.93,975.18,979.2,30.46,3,76,32
+Time-Limited Last-Graph PGM with RCI,cust-N30.vrp,30,1,30,0.77,0.36,4.04,17.32,1.95,975.49,979.81,26.54,3,70,35
+Time-Limited Last-Graph PGM with RCI,cust-N50.vrp,50,1,30,0.91,4.57,9.2,0,7.47,1737.42,1769.12,20.73,0,72,38
+Time-Limited Last-Graph PGM with RCI,cust-N50.vrp,50,1,30,1.0,3.87,8.23,0,7.42,1737.42,1766.45,19.31,0,78,27
+Time-Limited Last-Graph PGM with RCI,cust-N50.vrp,50,1,30,0.96,3.25,8.42,0,7.3,1737.42,1763.18,18.8,0,76,29
+Time-Limited Last-Graph PGM with RCI,cust-N50.vrp,50,2,30,0.66,7.26,9.39,7.72,7.73,2083.03,2121.42,32.31,1,114,35
+Time-Limited Last-Graph PGM with RCI,cust-N50.vrp,50,2,30,0.74,2.31,9.34,9.04,7.36,2083.14,2095.79,28.39,1,114,41
+Time-Limited Last-Graph PGM with RCI,cust-N50.vrp,50,2,30,0.67,2.35,9.88,6.78,7.4,2083.03,2100.86,27.23,1,117,40
+Time-Limited Last-Graph PGM with RCI,cust-N80.vrp,80,1,30,1.84,6.56,17.13,0,21.07,2548.69,2592.8,36.85,0,69,36
+Time-Limited Last-Graph PGM with RCI,cust-N80.vrp,80,1,30,1.76,5.98,17.1,0,32.07,2532.01,2581.07,36.33,0,71,35
+Time-Limited Last-Graph PGM with RCI,cust-N80.vrp,80,1,30,1.89,10.6,16.78,0,20.67,2533.41,2591.09,40.71,0,71,34
+Time-Limited Last-Graph PGM with RCI,cust-N80.vrp,80,2,30,1.01,3.9,17.87,0,21.97,3189.65,3217.23,34.46,0,96,91
+Time-Limited Last-Graph PGM with RCI,cust-N80.vrp,80,2,30,0.83,7.58,17.39,0,21.26,3192.13,3250.99,37.82,0,96,57
+Time-Limited Last-Graph PGM with RCI,cust-N80.vrp,80,2,30,0.75,2.27,17.26,0,21.15,3181.6,3209.36,32.46,0,98,70
+Time-Limited Last-Graph PGM with RCI,cust-N100.vrp,100,2,30,0.48,1.7,15.62,0,35.38,3800.01,3829.09,32.05,0,81,23
+Time-Limited Last-Graph PGM with RCI,cust-N100.vrp,100,2,30,0.4,2.27,15.66,0,45.64,3777.07,3824.69,32.31,0,76,27
+Time-Limited Last-Graph PGM with RCI,cust-N100.vrp,100,2,30,0.46,3.92,14.89,0,34.39,3722.75,3772.71,34.01,0,81,22

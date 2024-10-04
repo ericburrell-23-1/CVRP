@@ -7,14 +7,12 @@ from models.data_structures.customer import Customer
 from models.lp_models.RMP_GM_LA import create_RMP_GM_LA_model, convert_to_ILP
 from data.read_problem_data import generate_problem
 from debug.col_gen import check_route_reduced_cost_with_RCI, check_rc_from_matrix
-from debug.RMP_GM_LA import show_primal
 from utilities.initial_omega_r import initialize_omega_r
 from utilities.generate_col import generate_col
 from utilities.LA_arcs import find_LA_arcs, compute_omega_y_l, LA_Arc
 from utilities.compute_beta import compute_beta, create_LA_arc_graph, node_sort
 from utilities.model_updates.update_easy_edge_PGM import update_model, add_family_to_model, add_RCI_constrs
 from utilities.RCI.identify_violated_inequalities import identify_violated_ineqs, RCI_preprocessing
-from functools import lru_cache
 
 MY_DIVISOR = 2
 epsilon = 0.00001
@@ -72,7 +70,6 @@ def consistent_N2_graphs(omega_R_plus: list, N2_pairs: list, incumbent_graphs: l
     return consistent_graphs, new_edges
 
 
-@lru_cache(maxsize=12800)
 def arc_reduced_cost(arc: LA_Arc, cover_constraints: dict, RCI_constrs: dict, model: xp.problem):
     """Helper function to compute reduced cost of an LA-Arc"""
     rc = arc.cost
@@ -81,7 +78,11 @@ def arc_reduced_cost(arc: LA_Arc, cover_constraints: dict, RCI_constrs: dict, mo
 
 
         v = arc.visits[idx + 1]
-        RCIs = RCI_constrs[u.id] - RCI_constrs[v.id]
+        if RCI_constrs != {}:
+            RCIs = RCI_constrs[u.id] - RCI_constrs[v.id]
+        else:
+            RCIs = set()
+
         for c in RCIs:
             dual = model.getDual(c[0])
             # print(dual)
@@ -129,24 +130,19 @@ def lowest_rc_route_in_family(route_family: tuple, omega_y: dict, cover_constrai
         g.add_edge(i_id, j_id, weight=rc_edge[(i_id, j_id)])
 
 
-    start_solve = time.time()
     path = shortest_path(g, "Source", "Sink", "weight", 'bellman-ford')
     rc = path_weight(g, path, "weight")
-    end_solve = time.time()
-
-    print(f"Spent {round(end_solve - start_solve, 3)} seconds solving SPP.")
 
     path_customers = []
     for node_name in path[1:-1]:
         path_customers.append(node_name.split('_')[0])
 
-    print(f"Found path {path} with rc = {round(rc, 4)}")
+    # print(f"Found path {path} with rc = {round(rc, 4)}")
 
     return path_customers, rc
 
 
-def PGM_easy_edge(DATA_SET, NUM_LA_NEIGHBORS):
-    start_time = time.time()
+def PGM_last_graph(DATA_SET, NUM_LA_NEIGHBORS):
     customers, start_depot, end_depot, capacity = generate_problem(DATA_SET, MY_DIVISOR, NUM_LA_NEIGHBORS)
 
     customers_by_id = {}
@@ -182,13 +178,13 @@ def PGM_easy_edge(DATA_SET, NUM_LA_NEIGHBORS):
     N2_omega_y_l = consistent_N2_arcs(omega_y_l, N2_pairs, [])
     N2_omega_R_plus = consistent_N2_graphs(omega_R_plus, N2_pairs, [])
 
+    start_time = time.time()
     model, cover_constrs, flow_constrs, consistency_constrs, x_ij, x_p = create_RMP_GM_LA_model(
                 N2_omega_R_plus, N2_omega_y_l, customers, start_depot, end_depot)    
 
 
+    pricing_time = 0
     column_gen_count = 0
-    total_graph_manage_calls = 0
-    successful_graph_manage_calls = 0
     graph_manage_count = 0
     continue_iter = True
     while continue_iter:
@@ -202,21 +198,17 @@ def PGM_easy_edge(DATA_SET, NUM_LA_NEIGHBORS):
             print(f"Model has an LP objective val = {model.getObjVal()}")
 
             # UPDATE N2 AND CONTINUE IF NEGATIVE RC PATH EXISTS
-            graph_manage_count += 1
             continue_inner_optimization = False
-            for (l, _) in enumerate(omega_r):
-                total_graph_manage_calls += 1
-                start_solve = time.time()
-                l_hat_l, rc = lowest_rc_route_in_family(omega_R_plus[l], omega_y_l[l], cover_constrs, RCI_constrs, model)
-                end_solve = time.time()
-                print(f"Spent {round(end_solve - start_solve, 3)} seconds solving in lowest_rc_route function.")
-                if rc < -epsilon:
-                    successful_graph_manage_calls += 1
-                    continue_inner_optimization = True
-                    if len(l_hat_l) > 1:
-                        for idx, c1 in enumerate(l_hat_l[:-1]):
-                            c2 = l_hat_l[idx + 1]
-                            N2_pairs[l].add((c1, c2))
+            # for (l, _) in enumerate(omega_r):
+            l = len(omega_r) - 1
+            l_hat_l, rc = lowest_rc_route_in_family(omega_R_plus[l], omega_y_l[l], cover_constrs, RCI_constrs, model)
+            graph_manage_count += 1
+            if rc < -epsilon:
+                continue_inner_optimization = True
+                if len(l_hat_l) > 1:
+                    for idx, c1 in enumerate(l_hat_l[:-1]):
+                        c2 = l_hat_l[idx + 1]
+                        N2_pairs[l].add((c1, c2))
 
             # UPDATE ARCS AND EDGES BASED ON NEW N2
             if continue_inner_optimization:
@@ -232,10 +224,13 @@ def PGM_easy_edge(DATA_SET, NUM_LA_NEIGHBORS):
 
 
         # COLUMN GEN WHEN INNER OPTIMIZATION FINISHED
+        pricing_start = time.time()
         new_route, new_rc = generate_col(
             model, cover_constrs, customers, start_depot, end_depot, capacity, RCI_constrs)
         # check_route_reduced_cost_with_RCI(model, RCI_constrs, cover_constrs, customers, start_depot, end_depot, new_route)
         # check_rc_from_matrix(model, new_route, x_ij, capacity)
+        pricing_time += (time.time() - pricing_start)
+
 
         if new_rc >= -epsilon:
             print(
@@ -258,14 +253,12 @@ def PGM_easy_edge(DATA_SET, NUM_LA_NEIGHBORS):
             add_family_to_model(model, N2_omega_R_plus, N2_omega_y_l, cover_constrs, flow_constrs, x_ij, x_p, RCI_constrs)
             
     end_LP_time = time.time()
-    # show_primal(model, x_ij)
     convert_to_ILP(model)
     model.controls.outputlog = 1
     model.optimize()
     end_time = time.time()
 
-    print(f"Finished solving entire problem in {round(end_time - start_time, 1)} seconds.\nLP time was {round(end_LP_time - start_time, 1)}.\nRan column gen {column_gen_count} times.\n{graph_manage_count} iterations of PGM with a total of {total_graph_manage_calls} calls to PGM.\n{successful_graph_manage_calls} of those calls found rc < 0.")
-    # show_primal(model, x_ij)
+    print(f"Finished solving entire problem in {round(end_time - start_time, 1)} seconds.\nLP time was {round(end_LP_time - start_time, 1)}.\nRan column gen {column_gen_count} times.\nCalled graph management {graph_manage_count} times for the last graph.\nSpent {round(pricing_time, 1)} seconds pricing.")
             
 
             

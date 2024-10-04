@@ -1,5 +1,6 @@
 import math
 import time
+import copy
 import itertools
 from models.data_structures.customer import Customer
 
@@ -46,6 +47,7 @@ class LA_Arc:
         self.visits = [u] + N_hat + [v]
         self.demand = self.compute_demand()
         self.id = self.compute_id()
+        self.a_uvp = self.compute_a_uvp()
 
     def __eq__(self, other):
         if isinstance(other, LA_Arc):
@@ -72,6 +74,17 @@ class LA_Arc:
             arc_id += f"_{cust.id}"
 
         return arc_id
+    
+    def compute_a_uvp(self):
+        # Make a all zeros at the start and just update the ones that exist in this arc
+        # duh
+        a = {}
+        for idx, c1 in enumerate(self.visits[:-1]):
+            c2 = self.visits[idx + 1]
+            a[c1.id, c2.id] = 1
+
+        return a
+                
 
 
 def powerset(s):
