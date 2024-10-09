@@ -14,7 +14,6 @@ from utilities.LA_arcs import find_LA_arcs, compute_omega_y_l, LA_Arc
 from utilities.compute_beta import compute_beta, create_LA_arc_graph, node_sort
 from utilities.model_updates.update_easy_edge_PGM import update_model, add_family_to_model, add_RCI_constrs
 from utilities.RCI.identify_violated_inequalities import identify_violated_ineqs, RCI_preprocessing
-from functools import lru_cache
 
 MY_DIVISOR = 2
 epsilon = 0.00001
@@ -96,11 +95,15 @@ def lowest_rc_route_in_family(route_family: tuple, omega_y: dict, cover_constrai
     rc_arc = {}
     rc_edge = {}
     # GET REDUCED COST OF EACH ARC
+    start_arcs = time.time()
     for y in omega_y:
         for arc in omega_y[y]:
             rc_arc[arc.id] = arc_reduced_cost(arc, cover_constraints, RCI_constrs, model)
+    end_arcs = time.time()
+    print(f"Spent {round(end_arcs - start_arcs, 3)} calculating the arc reduced costs.")
 
     # FIND REDUCED COST FOR EACH EDGE IN GRAPH BASED ON LOWEST REDUCED COST ARC
+    start_edges = time.time()
     start_node = route_family[1][0]
     for (i, j) in route_family[0]:
         if i.u.id == start_node.u.id:
@@ -121,11 +124,16 @@ def lowest_rc_route_in_family(route_family: tuple, omega_y: dict, cover_constrai
                     rc_edge[(i_id, j_id)] = rc_arc[arc.id]
                 elif rc_arc[arc.id] < rc_edge[(i_id, j_id)]:
                     rc_edge[(i_id, j_id)] = rc_arc[arc.id]
+    end_edges = time.time()
+    print(f"Spent {round(end_edges - start_edges, 3)} looping over edges.")
 
     # PRICE OVER GRAPH WITH EDGE WEIGHTS IN RC_EDGE
+    start_build = time.time()
     g = DiGraph(directed=True)
     for (i_id, j_id) in rc_edge:
         g.add_edge(i_id, j_id, weight=rc_edge[(i_id, j_id)])
+    end_build = time.time()
+    print(f"Spent {round(end_build - start_build, 3)} building the graph.")
 
 
     start_solve = time.time()
@@ -208,7 +216,7 @@ def PGM_easy_edge(DATA_SET, NUM_LA_NEIGHBORS):
                 start_solve = time.time()
                 l_hat_l, rc = lowest_rc_route_in_family(omega_R_plus[l], omega_y_l[l], cover_constrs, RCI_constrs, model)
                 end_solve = time.time()
-                print(f"Spent {round(end_solve - start_solve, 3)} seconds solving in lowest_rc_route function.")
+                print(f"Spent {round(end_solve - start_solve, 3)} seconds in lowest_rc_route function.")
                 if rc < -epsilon:
                     successful_graph_manage_calls += 1
                     continue_inner_optimization = True

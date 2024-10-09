@@ -282,11 +282,15 @@ def add_family_to_model(model: xp.problem, omega_R_plus: list, omega_y_l: list, 
 
 def add_RCI_constrs(model: xp.problem, new_RCIs: list, RCI_constrs: dict):
     print(f"Adding {len(new_RCIs)} new RCI constraints")
+    RCI_added = []
     for RCI_constr in new_RCIs:
         constr = xp.Sum(RCI_constr[0]) >= (RCI_constr[1])
         constr.name = f"RCI_{RCI_constr[2].name}"
         model.addConstraint(constr)
+        RCI_added.append((constr, RCI_constr[2].N_hat))
         # ADD CONSTR TO RCI_CONSTR DICT FOR ALL CUST IN N_HAT
         for u in RCI_constr[2].N_hat:
             RCI_constrs[u.id].add((constr.index, RCI_constr[1]))
         # RCI_constrs[constr.name] = RCI_constr[2].N_hat
+
+    return RCI_added
