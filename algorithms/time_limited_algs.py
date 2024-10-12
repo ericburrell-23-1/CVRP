@@ -4,7 +4,7 @@ import multiprocessing
 import xpress as xp
 from data.read_problem_data import generate_problem
 from data.print_results import write_test_data_to_file
-from algorithms.PGM_last_graph import lowest_rc_route_in_family, consistent_N2_arcs, consistent_N2_graphs
+from algorithms.obsolete.PGM_last_graph import lowest_rc_route_in_family, consistent_N2_arcs, consistent_N2_graphs
 from utilities.initial_omega_r import initialize_omega_r
 from utilities.generate_col import generate_col
 from utilities.LA_arcs import find_LA_arcs, compute_omega_y_l, LA_Arc

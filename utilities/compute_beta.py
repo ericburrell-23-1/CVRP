@@ -89,6 +89,9 @@ def create_LA_arc_graph(omega_y: dict, beta: list, capacity: int):
     start_node = Node(beta[0], int(capacity))
     visited.add(start_node)
 
+    # beta_ids = [u.id for u in beta]
+    # print(f"Beta looks like this: {beta_ids}")
+
     def draw_edges_from(node: Node):
         '''
         Draws edges from current node i = (u_i, d_i) to all new nodes j at (u_j, d_j), where beta.index(u_j) > beta.index(u_i), and d_j = d_i - d_y for some y = (u_i, u_j, d_y) in omega_y.
@@ -118,7 +121,7 @@ def create_LA_arc_graph(omega_y: dict, beta: list, capacity: int):
         # print(f"Exploring new node {new_node.name}")
         draw_edges_from(new_node)
 
-    # print("Graph complete")
+    print(f"Graph complete, it has {len(visited)} nodes and {len(edges)} edges.")
 
     return (edges, sorted(visited, key=node_sort))
 
