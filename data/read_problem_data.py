@@ -10,7 +10,7 @@ def generate_problem(data_set: str, MY_DIVISOR: int, NUM_LA_NEIGHBORS: int, CUST
     """
     print(f"Getting problem data for {data_set}")
 
-    file_path = f"./data_sets/Uchoa/{data_set}"
+    file_path = f"./data_sets/XML/{data_set}"
     with open(file_path, "r") as file:
         lines = file.readlines()
 

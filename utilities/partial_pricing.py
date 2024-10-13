@@ -243,10 +243,91 @@ def add_complimentary_column_edges(model: xp.problem, beta: list, cover_constrs:
                 visits.append(end_depot)
             else:
                 visits.append(cust_by_id[id])
-                duals[id] = 0
 
         generated_routes.append(visits)
 
 
     N2_pairs[0].update(get_N2_from_complimentary_routes(generated_routes))
 
+
+
+
+def add_complimentary_column_edges_disc(model: xp.problem, beta: list, cover_constrs: dict, customers: list, start_depot: Customer, end_depot: Customer, capacity: int, omega_r: list, omega_R_plus: list, omega_y_l: list, omega_y: dict, N2_pairs: set):
+    """Adds edges to N2 using similar process to partial pricing, from existing beta, without adding new graphs"""
+    # print("Building dual dictionary...")
+    duals = dual_dict(model, cover_constrs, customers)
+
+    # print("Building customer dictionary...")
+    cust_by_id = {}
+    for u in customers:
+        cust_by_id[u.id] = u
+
+    generated_routes = []
+
+    paths_found = pricing_from_beta(beta[1:-1], customers, start_depot, end_depot, model, duals, capacity, cust_by_id)
+
+    # print("Paths found. Building routes...")
+    for path in paths_found:
+        visits = []
+        for id in path:
+            if id == "Source":
+                visits.append(start_depot)
+            elif id == "Sink":
+                visits.append(end_depot)
+            else:
+                visits.append(cust_by_id[id])
+
+        generated_routes.append(visits)
+
+    complimentary_N2 = get_N2_from_complimentary_routes(generated_routes)
+    new_N2 = complimentary_N2 - N2_pairs
+    N2_pairs.update(new_N2)
+
+    return new_N2
+
+
+
+def partial_pricing_PGM_disc(model: xp.problem, constraints: dict, customers: list, start_depot: Customer, end_depot: Customer, capacity: int, omega_r: list, omega_R_plus: list, omega_y_l: list, omega_y: dict, N2_pairs: set, RCI_constrs: dict = None, time_limit = 999999):
+    # start_time = time.time()
+    duals = dual_dict(model, constraints, customers)
+    # print("Computing beta")
+    unique_seed = len(omega_r) + 10
+    beta = compute_beta_from_nothing(customers, unique_seed)
+    # print("Finished computing beta")
+    # print(time_limit)
+
+    cust_by_id = {}
+    for u in customers:
+        cust_by_id[u.id] = u
+
+    generated_routes = []
+
+        # print(f"Reduced cost = {reduced_cost}; going again")
+    paths_found = pricing_from_beta(beta, customers, start_depot, end_depot, model, duals, capacity, cust_by_id, RCI_constrs)
+
+        # print("Path found. Building Route")
+    for path in paths_found:
+        visits = []
+        for id in path:
+            if id == "Source":
+                visits.append(start_depot)
+            elif id == "Sink":
+                visits.append(end_depot)
+            else:
+                visits.append(cust_by_id[id])
+                duals[id] = 0
+
+        generated_routes.append(visits)
+
+
+    if len(generated_routes) > 0:
+        beta.insert(0, start_depot)
+        beta.append(end_depot)
+        omega_r.append(Route(generated_routes[0], customers, start_depot, end_depot))
+        omega_y_l.append(compute_omega_y_l(beta, omega_y))
+        complimentary_N2 = get_N2_from_complimentary_routes(generated_routes)
+        new_N2 = complimentary_N2 - N2_pairs
+        N2_pairs.update(new_N2)
+        return True, beta, new_N2
+
+    return False, [], []
