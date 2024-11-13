@@ -1,0 +1,4 @@
+Algorithm,Data_set,LA_count,Time_limit,Preprocessing_time,Pricing_count,Total_graph_manage_calls,Successful_graph_manage_calls,Graph_manage_count,Comp_col_time,PGM_model_update_time,LP_solve_time,Check_RCI_time,Add_RCI_to_model_time,Add_RCI_to_PGM_time,PGM_time,PGM_update_N2_time,Pricing_time,Build_new_graph_time,Iteration_time,Total_time,Total_time_plus_preprocess,LP_Objective_Val,ILP_Objective_Val
+Large-Capacity PGM,X-n101-k25.vrp,0,60,7.79,9,45,0,9,4.5,11.88,4.77,16.58,0.01,0.17,0.67,0.12,20.99,2.85,63.03,78.12,85.91,30784,31838
+Large-Capacity PGM,X-n148-k46.vrp,0,60,17.35,5,15,0,5,13.02,1.13,0.24,1.87,0.0,0.03,0.08,0.02,44.35,0.61,61.43,66.7,84.06,49798,50754
+Large-Capacity PGM,X-n200-k36.vrp,0,120,33.84,1,1,0,1,52.47,15.34,0.14,0.11,0,0,0.0,0.03,58.16,5.46,131.71,132.27,166.11,70061,70061

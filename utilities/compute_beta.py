@@ -23,7 +23,9 @@ class Node:
 
 
 def compute_beta(route: Route, customers: list):
-    beta = copy.deepcopy(route.visits)
+    beta = []
+    for c in route.visits:
+        beta.append(c)
 
     customers_to_add = rand_order(set(customers) - set(route.visits), 39)
 

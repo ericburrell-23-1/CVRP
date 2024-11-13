@@ -78,7 +78,8 @@ def compute_beta_from_nothing(customers, seed):
 
 
 
-def pricing_from_beta(beta, customers, start_depot, end_depot, model, duals, capacity, cust_by_id, RCI_constrs=None):
+def pricing_from_beta(beta, customers, start_depot, end_depot, model, duals, capacity, cust_by_id, RCI_constrs=None, time_limit=9999):
+    start_time = time.time()
     # CREATE GRAPH
     # print("Setting up pricing graph")
     # start_setup = time.time()
@@ -119,7 +120,7 @@ def pricing_from_beta(beta, customers, start_depot, end_depot, model, duals, cap
     # print(f"Finished setup in {round(end_setup - start_setup, 2)} seconds. Solving RCSPP")
     # start_solve = time.time()
     paths_found = []
-    while True:
+    while (time.time() - start_time) < time_limit:
         bidirec = BiDirectional(g, max_res=max_res, min_res=min_res,
                                 direction="both", elementary=False)
         # print("Solving for path...")
@@ -162,7 +163,7 @@ def pricing_from_beta(beta, customers, start_depot, end_depot, model, duals, cap
 
 
 def partial_pricing_PGM(model: xp.problem, constraints: dict, customers: list, start_depot: Customer, end_depot: Customer, capacity: int, omega_r: list, omega_R_plus: list, omega_y_l: list, omega_y: dict, N2_pairs: list, RCI_constrs: dict = None, time_limit = 999999):
-    # start_time = time.time()
+    start_time = time.time()
     duals = dual_dict(model, constraints, customers)
     # print("Computing beta")
     unique_seed = len(omega_r) + 10
@@ -176,8 +177,9 @@ def partial_pricing_PGM(model: xp.problem, constraints: dict, customers: list, s
 
     generated_routes = []
 
+    pricing_tl = time_limit - (time.time() - start_time)
         # print(f"Reduced cost = {reduced_cost}; going again")
-    paths_found = pricing_from_beta(beta, customers, start_depot, end_depot, model, duals, capacity, cust_by_id, RCI_constrs)
+    paths_found = pricing_from_beta(beta, customers, start_depot, end_depot, model, duals, capacity, cust_by_id, RCI_constrs, pricing_tl)
 
         # print("Path found. Building Route")
     for path in paths_found:
@@ -253,7 +255,7 @@ def add_complimentary_column_edges(model: xp.problem, beta: list, cover_constrs:
 
 
 def add_complimentary_column_edges_disc(model: xp.problem, beta: list, cover_constrs: dict, customers: list, start_depot: Customer, end_depot: Customer, capacity: int, omega_r: list, omega_R_plus: list, omega_y_l: list, omega_y: dict, N2_pairs: set):
-    """Adds edges to N2 using similar process to partial pricing, from existing beta, without adding new graphs"""
+    """Adds edges to N2 using similar process to partial pricing, from existing beta, without adding new graphs. Uses a shared N2."""
     # print("Building dual dictionary...")
     duals = dual_dict(model, cover_constrs, customers)
 

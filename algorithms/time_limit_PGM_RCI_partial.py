@@ -10,6 +10,7 @@ from utilities.PGM.PGM import consistent_N2_arcs, consistent_N2_graphs, add_RCI_
 from utilities.partial_pricing import add_complimentary_column_edges
 from utilities.PGM.algorithm_functions import problem_setup_PP
 from models.lp_models.RMP_GM_LA import convert_to_ILP
+from data.print_results import write_test_data_to_file
 
 
 
@@ -35,6 +36,7 @@ def TL_PGM_PP_with_RCI(DATA_SET: str, LA_COUNT: int, TIME_LIMIT: int = 30):
     PGM_time = 0
     PGM_update_N2_time = 0
     pricing_time = 0
+    build_new_graph_time = 0
 
     # SOLVE ONCE AND ADD MANY EDGES VIA COMPLIMENTARY COLUMN PRICING OPERATION
     print("Solving LP first Iteration")
@@ -64,6 +66,8 @@ def TL_PGM_PP_with_RCI(DATA_SET: str, LA_COUNT: int, TIME_LIMIT: int = 30):
         # INNER OPTIMIZATION LOOP (PGM)
         continue_PGM = True
         while continue_PGM:
+            if time.time() - start_time - preprocess_time > TIME_LIMIT:
+                break
             # OPTIMIZE
             start_operation = time.time()
             model.optimize()
@@ -86,6 +90,8 @@ def TL_PGM_PP_with_RCI(DATA_SET: str, LA_COUNT: int, TIME_LIMIT: int = 30):
                 model.optimize()
                 LP_solve_time += time.time() - start_operation
 
+            if time.time() - start_time - preprocess_time > TIME_LIMIT:
+                break
             # PGM USING MOST RECENT SOLUTION
             start_operation = time.time()
             continue_PGM, gm_calls, successful_gm_calls = PGM(omega_r, omega_R_plus, y_arc_rows, all_dual_constrs, uv_matrix, cost_vector, arc_matrix, model, N2_pairs)
@@ -101,14 +107,14 @@ def TL_PGM_PP_with_RCI(DATA_SET: str, LA_COUNT: int, TIME_LIMIT: int = 30):
                     add_complimentary_column_edges(model, first_beta, cover_constrs, customers, start_depot, end_depot, capacity, omega_r, omega_R_plus, omega_y_l, omega_y, N2_pairs)
                     comp_col_time += time.time() - start_operation
 
-                    start_operation = time.time()
-                    N2_omega_y_l, new_arcs = consistent_N2_arcs(omega_y_l, N2_pairs, N2_omega_y_l)
-                    N2_omega_R_plus, new_edges = consistent_N2_graphs(omega_R_plus, N2_pairs, N2_omega_R_plus)
-                    PGM_update_N2_time += time.time() - start_operation
+                    # start_operation = time.time()
+                    # N2_omega_y_l, new_arcs = consistent_N2_arcs(omega_y_l, N2_pairs, N2_omega_y_l)
+                    # N2_omega_R_plus, new_edges = consistent_N2_graphs(omega_R_plus, N2_pairs, N2_omega_R_plus)
+                    # PGM_update_N2_time += time.time() - start_operation
 
-                    start_operation = time.time()
-                    update_model(model, new_arcs, new_edges, cover_constrs, flow_constrs, x_ij, x_p, RCI_constrs)
-                    PGM_model_update_time += time.time() - start_operation
+                    # start_operation = time.time()
+                    # update_model(model, new_arcs, new_edges, cover_constrs, flow_constrs, x_ij, x_p, RCI_constrs)
+                    # PGM_model_update_time += time.time() - start_operation
 
                 # UPDATE GRAPH AND ARC SETS
                 start_operation = time.time()
@@ -121,6 +127,9 @@ def TL_PGM_PP_with_RCI(DATA_SET: str, LA_COUNT: int, TIME_LIMIT: int = 30):
                 update_model(model, new_arcs, new_edges, cover_constrs, flow_constrs, x_ij, x_p, RCI_constrs)
                 PGM_model_update_time += time.time() - start_operation
 
+        if time.time() - start_time - preprocess_time > TIME_LIMIT:
+                break
+        
         # PARTIAL PRICING TO QUICKLY GET NEW GRAPH
         print("Doing partial pricing")
         start_operation = time.time()
@@ -131,10 +140,14 @@ def TL_PGM_PP_with_RCI(DATA_SET: str, LA_COUNT: int, TIME_LIMIT: int = 30):
 
         if continue_GM:
             print(f"LP obj = {round(model.getObjVal(), 2)}")
-            omega_R_plus.append(create_LA_arc_graph(N2_omega_y_l[-1], beta, capacity))
             start_operation = time.time()
             N2_pairs[-1].update(initial_N2_pairs)
             N2_omega_y_l, new_arcs = consistent_N2_arcs(omega_y_l, N2_pairs, N2_omega_y_l)
+            PGM_update_N2_time = time.time() - start_operation
+            start_operation = time.time()
+            omega_R_plus.append(create_LA_arc_graph(omega_y_l[-1], beta, capacity))
+            build_new_graph_time += time.time() - start_operation
+            start_operation = time.time()
             N2_omega_R_plus, new_edges = consistent_N2_graphs(omega_R_plus, N2_pairs, N2_omega_R_plus)
             PGM_update_N2_time += time.time() - start_operation
 
@@ -144,11 +157,56 @@ def TL_PGM_PP_with_RCI(DATA_SET: str, LA_COUNT: int, TIME_LIMIT: int = 30):
         else:
             print("Done iterating. Solving ILP.")
 
+    start_operation = time.time()
+    model.optimize()
+    LP_solve_time += time.time() - start_operation
+    LP_obj_val = model.getObjVal()
     end_LP_time = time.time()
     convert_to_ILP(model)
     model.controls.outputlog = 1
     model.controls.maxtime = 15
     model.optimize()
     end_time = time.time()
+    ILP_obj_val = model.getObjVal()
+
+    iteration_time = end_LP_time - start_time - preprocess_time
+    total_time = end_time - start_time - preprocess_time
+    total_time_plus_preprocess = total_time + preprocess_time
+    ILP_solve_time = end_LP_time - end_time
+    real_time = LP_solve_time + ILP_solve_time
+
+
+    results = {
+        "Algorithm": "Small-Capacity PGM", 
+        "Data_set": DATA_SET,
+        "LA_count": LA_COUNT,
+        "Time_limit": TIME_LIMIT,
+        "Preprocessing_time": round(preprocess_time, 2),
+        "Pricing_count": pricing_count,
+        "Total_graph_manage_calls": total_graph_manage_calls,
+        "Successful_graph_manage_calls": successful_graph_manage_calls,
+        "Graph_manage_count": graph_manage_count,
+        "Comp_col_time": round(comp_col_time, 2),
+        "PGM_model_update_time": round(PGM_model_update_time, 2),
+        "LP_solve_time": round(LP_solve_time, 2),
+        "Check_RCI_time": round(check_RCI_time, 2),
+        "Add_RCI_to_model_time": round(add_RCI_to_model_time, 2),
+        "Add_RCI_to_PGM_time": round(add_RCI_to_PGM_time, 2),
+        "PGM_time": round(PGM_time, 2),
+        "PGM_update_N2_time": round(PGM_update_N2_time, 2),
+        "Pricing_time": round(pricing_time, 2),
+        "Build_new_graph_time": round(build_new_graph_time, 2),
+        "Iteration_time": round(iteration_time, 2),
+        "Total_time": round(total_time, 2),
+        "Total_time_plus_preprocess": round(total_time_plus_preprocess, 2),
+        "LP_Objective_Val": round(LP_obj_val),
+        "ILP_Objective_Val": round(ILP_obj_val),
+        "ILP_solve_time": round(ILP_solve_time, 2),
+        "Real_time": round(real_time, 2)
+    }
+
+    write_test_data_to_file(results, "Small_Cap_PGM.csv")
+
+
 
     print(f"Finished solving entire problem in {round(end_time - start_time - preprocess_time, 1)} seconds.\nLP time was {round(end_LP_time - start_time - preprocess_time, 1)}.\nRan column gen {pricing_count} times.\n{graph_manage_count} iterations of PGM with a total of {total_graph_manage_calls} calls to PGM.\n{successful_graph_manage_calls} of those calls found rc < 0.")

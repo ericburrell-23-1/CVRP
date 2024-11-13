@@ -40,7 +40,7 @@ class RCI_subset:
 def all_candidate_subsets(customers: list, start_depot: Customer):
     subsets = set()
     for u in customers:
-        cust_set = set(u.closest_neighbors[:8] + [u]) - {start_depot}
+        cust_set = set(u.closest_neighbors[:6] + [u]) - {start_depot}
         for N_hat in powerset(cust_set):
             if len(N_hat) == 0:
                 continue

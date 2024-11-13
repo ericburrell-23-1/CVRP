@@ -4,7 +4,7 @@ from utilities.initial_omega_r import initialize_omega_r
 from utilities.LA_arcs import find_LA_arcs, compute_omega_y_l
 from utilities.compute_beta import compute_beta, create_LA_arc_graph
 from utilities.RCI.identify_violated_inequalities import RCI_preprocessing
-from utilities.PGM.shared_N2_discrete import consistent_N2_arcs, consistent_N2_graphs
+from utilities.PGM.PGM import consistent_N2_arcs, consistent_N2_graphs
 from utilities.PGM.PGM import pgm_preprocessing
 
 MY_DIVISOR = 1
@@ -44,7 +44,7 @@ def problem_setup_PP(DATA_SET, NUM_LA_NEIGHBORS):
 
     print("Checking N2 consistent arcs and edges...")
     N2_omega_y_l = consistent_N2_arcs(omega_y_l, N2_pairs, [])
-    (edges, nodes) = create_LA_arc_graph(N2_omega_y_l[-1], beta, capacity)
+    (edges, nodes) = create_LA_arc_graph(omega_y_l[-1], beta, capacity)
     omega_R_plus.append((edges, nodes))
     N2_omega_R_plus = consistent_N2_graphs(omega_R_plus, N2_pairs, [])
 
