@@ -5,6 +5,7 @@ from cspy import BiDirectional
 from numpy import array
 from bisect import bisect_left, insort
 from typing import Callable
+# from copy import deepcopy
 from algorithms.jy_opt.partial_pricing import RCI_term, epsilon, dual_dict, get_N2_from_complimentary_routes, add_demands
 
 def positive_rc_pricing(beta: list, N: list, demands: dict, rmp: xp.problem, duals_cover: dict, capacity: int, cost: dict, RCI_constrs: dict=None):
@@ -217,15 +218,16 @@ def relaxed_bellman_pricing(beta: list, N: list, demands: dict, rmp: xp.problem,
             reduced_cost[u, v] = cost[u, v] - duals_cover[u] - RCI_term(rmp, u, v, RCI_constrs)
             etas.add((reduced_cost[u, v] / demands[u]))
             
-    eta = 0 # (-1.0001) * min(etas)
+    eta = (-1.0001) * min(etas)
     
     # CREATE GRAPH
     g = DiGraph(directed=True, n_res=1, elementary=False)
 
     # INITIALIZE CUSTOMER NODE DEMANDS
     demand_thresholds = {}
+    starting_thresholds = create_capacity_intervals(capacity)
     for u in N:
-        demand_thresholds[u] = [capacity]
+        demand_thresholds[u] = [t for t in starting_thresholds]
     demand_thresholds[-2] = [0]
 
     # TRACK VISITED NODES
@@ -236,7 +238,7 @@ def relaxed_bellman_pricing(beta: list, N: list, demands: dict, rmp: xp.problem,
 
     # SOURCE CONNECTIONS
     for u in N:
-        u_edges[u] = []
+        u_edges[u] = set()
         edge_weight = cost[-1, u]
         v_node = (u, capacity)
         g.add_edge("Source", v_node, weight=edge_weight)
@@ -247,21 +249,21 @@ def relaxed_bellman_pricing(beta: list, N: list, demands: dict, rmp: xp.problem,
     def recursively_draw_edges(u_i, d_i):
         u_idx = beta.index(u_i)
         for u_j in beta[u_idx + 1:-1]:
-            target_d_j = int(round(d_i - demands[u]))
-            d_j = find_d_uvd(demand_thresholds[u_j], target_d_j)
-            if d_j >= demands[u_j]:
+            d_j = int(round(d_i - demands[u_i]))
+            # d_j = find_d_uvd(demand_thresholds[u_j], target_d_j)
+            if d_j >= demands[u_j] + 1:
                 u_node = (u_i, d_i)
                 v_node = (u_j, d_j)
                 edge_weight = reduced_cost[u_i, u_j] + (eta * demands[u_i])
                 g.add_edge(u_node, v_node, weight=edge_weight)
-                u_edges[u_i].append((u_node, v_node))
+                u_edges[u_i].add((u_node, v_node))
                 if v_node not in visited:
                     visited.add(v_node)
                     recursively_draw_edges(u_j, d_j)
         
         edge_weight = reduced_cost[u_i, -2] + (eta * d_i)
         g.add_edge((u_i, d_i), "Sink", weight=edge_weight)
-        u_edges[u_i].append(((u_i, d_i), "Sink"))
+        u_edges[u_i].add(((u_i, d_i), "Sink"))
 
     # BEGIN DRAWING EDGES FROM FIRST NODES AFTER SOURCE
     for u in beta[1:-1]:
@@ -276,12 +278,13 @@ def relaxed_bellman_pricing(beta: list, N: list, demands: dict, rmp: xp.problem,
     paths_found = []
     # print("Attempting to solve SPP to price over the graph.")
     while True:
-        shortest_path = nx.bellman_ford_path(g, "Source", "Sink", "weight") # nx.dijkstra_path(g, "Source", "Sink", "weight")
+        print(f"Graph has {g.number_of_nodes()} nodes and {g.number_of_edges()}")
+        shortest_path = nx.dijkstra_path(g, "Source", "Sink", "weight") # nx.dijkstra_path(g, "Source", "Sink", "weight")
         # rc = nx.path_weight(g, shortest_path, "weight") + total_offset
         path_weight = nx.path_weight(g, shortest_path, "weight")
 
         # print(f"Found a path with weight = {round(path_weight, 2)} and a total offset of {total_offset}")
-        rc = path_weight # - total_offset
+        rc = path_weight - total_offset
 
         if rc > -epsilon:
             print(f"Pricing done, rc = {round(rc, 2)}")
@@ -300,6 +303,20 @@ def relaxed_bellman_pricing(beta: list, N: list, demands: dict, rmp: xp.problem,
     print(f"dijkstra_pricing found {len(paths_found)} new paths")
     return paths_found
 
+
+
+def create_capacity_intervals(capacity: int):
+    NUM_INTERVALS = capacity
+
+    interval_step = int(round(capacity / NUM_INTERVALS))
+
+    threshold = capacity
+    thresholds = []
+    while threshold >= 0:
+        insort(thresholds, int(threshold))
+        threshold -= interval_step
+
+    return thresholds
 
 
 def add_nodes_to_graph(g: DiGraph, path: list, demands: dict, demand_thresholds: dict, eta: float, edge_drawing_func: Callable[[int, int], None], visited: set, u_edges: dict):
@@ -327,10 +344,13 @@ def add_nodes_to_graph(g: DiGraph, path: list, demands: dict, demand_thresholds:
                 g.add_edge(k, j_hat, weight=edge_weight)
 
                 u_edges[u_k].remove((k, j))
-                u_edges[u_k].append((k, j_hat))
+                u_edges[u_k].add((k, j_hat))
 
+        # print(f"Finished updating {j} predecessors")
         visited.add(j_hat)
         edge_drawing_func(u_j, d_j_hat)
+    #     print(f"Finished drawing {j} edges")
+    # print("Finished updating graph")
 
 
 
